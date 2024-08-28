@@ -18,3 +18,5 @@ RUN mkdir $APP_HOME/mediafiles
 WORKDIR $APP_HOME
 
 COPY . .
+
+RUN python manage.py collectstatic --noinput

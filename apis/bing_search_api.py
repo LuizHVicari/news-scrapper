@@ -49,8 +49,6 @@ def get_news_from_query(query: str,
 
         news = list()
         for value in values:
-            logger.debug(value)
-
             response_dict: ResponseDict = dict()
             response_dict['name'] = value['name']
             response_dict['description'] = value.get('description')

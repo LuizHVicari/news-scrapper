@@ -23,7 +23,9 @@ def get_news() -> list[News]:
         returning_news = list()
         for n in news:
             try:
-                n_obj = News()
+                n_obj = News(
+                    query=query
+                )
                 for k, v in n.items():
                     setattr(n_obj, k, v)
                 n_obj.full_clean()

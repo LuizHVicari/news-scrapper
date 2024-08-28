@@ -20,33 +20,36 @@ bot = telebot.TeleBot(TELEGRAM_KEY)
 
 
 def send_news_to_users(news: list[News]):
-    logger.info('Iniciando o envio das notícias.')
+    logger.info('Starting the news broadcasting.')
 
     if len(news) == 0:
-        return
-    
-    telegram_users_ids: str = TelegramUser.objects.all().values_list('telegram_id', flat=True)
-    
-    message = 'Olá, esse é o resumo das últimas notícias\n'
-    for user_id in telegram_users_ids:
-        bot.send_message(user_id, message)
-    for n in news:
-        message = f'Assunto: {n.query.query_term.capitalize()}\n'
-        message += f'Notícia: {n.name}\n'
-        if n.description and n.description != n.name:
-            if len(n.description) > 100:
-                n.description = n.description[:100] + '...'
-            message += f'Descrição: {n.description}\n'
-        message += f'Data da notícia: {n.date_published}\n'
-        message += f'Link: {n.url}\n'
+        logger.info('No news to send')
+    else:
+        telegram_users_ids: str = TelegramUser.objects.all().values_list('telegram_id', flat=True)
+        
+        message = 'Olá, esse é o resumo das últimas notícias\n'
+        for user_id in telegram_users_ids:
+            bot.send_message(user_id, message)
+        for n in news:
+            if n.query.query_term:
+                message = f'Assunto: {n.query.query_term.capitalize()}\n'
+            else:
+                message = ''
+            message += f'Notícia: {n.name}\n'
+            if n.description and n.description != n.name:
+                if len(n.description) > 100:
+                    n.description = n.description[:100] + '...'
+                message += f'Descrição: {n.description}\n'
+            message += f'Data da notícia: {n.date_published}\n'
+            message += f'Link: {n.url}\n'
+            for user_id in telegram_users_ids:
+                bot.send_message(user_id, message)
+
+        message = 'Esse é o fim das notícias, tenha um ótimo dia.'
         for user_id in telegram_users_ids:
             bot.send_message(user_id, message)
 
-    message = 'Esse é o fim das notícias, tenha um ótimo dia.'
-    for user_id in telegram_users_ids:
-        bot.send_message(user_id, message)
-
-    logger.success('As notícias foram enviadas.')
+        logger.success('All news have been sent.')
 
 
 @bot.message_handler(commands=['registrar'])
@@ -60,10 +63,10 @@ def register_user(msg: telebot.types.Message):
         telegram_user.full_clean()
         telegram_user.save()
         bot.reply_to(msg, 'Usuário registrado. Para excluir seu usuário, digite /excluir ou clique no link.')
-        logger.success(f'O usuário {telegram_user} foi registrado.')
+        logger.success(f'The user {telegram_user} has been registered.')
     except ValidationError as e:
         bot.reply_to(msg, f'Não foi possível registrar o seu usuário devido a: {e}.')
-        logger.warning(f'Não foi possível registrar o usuário devido ao erro {e}.')
+        logger.warning(f'Could not register the user since an error occured {e}.')
 
 
 @bot.message_handler(commands=['excluir'])
@@ -71,7 +74,7 @@ def unregister_user(msg: telebot.types.Message):
     user = msg.from_user
     try:
         telegram_user = TelegramUser.objects.get(telegram_id=user.id)
-        logger.info(f'O ususário {telegram_user} pediu para cancelar o cadastro.')
+        logger.info(f'The user {telegram_user} required to end his subscription.')
         telegram_user.delete()
         bot.reply_to(msg, 'Usuário excluído com sucesso.')
     except TelegramUser.DoesNotExist:

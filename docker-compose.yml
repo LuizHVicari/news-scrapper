@@ -1,7 +1,7 @@
 services:
   web:
     build: .
-    command: gunicorn news_scrapper.wsgi:application --bind 0.0.0.0:8000
+    command: bash -c "python manage.py migrate --noinput && gunicorn news_scrapper.wsgi:application --bind 0.0.0.0:8000"
     expose:
       - 8000
     env_file:
@@ -51,14 +51,14 @@ services:
       retries: 30
   celery:
     build: .
-    command: celery -A news_scrapper worker -l info
+    command: celery -A news_scrapper worker -l critical
     env_file:
       - ./.env
     depends_on:
       - redis
   celery-beat:
     build: .
-    command: celery -A news_scrapper beat -l info
+    command: celery -A news_scrapper beat -l critical
     env_file:
       - ./.env
     depends_on:

@@ -3,13 +3,10 @@ from dotenv import load_dotenv
 from decouple import config
 from loguru import logger
 import sys
-import os
-from celery.schedules import crontab
-from datetime import timedelta
 
 
 logger.remove()
-logger.add(sys.stderr, level='DEBUG')
+logger.add(sys.stderr, level=config('LOG_LEVEL', cast=str, default='INFO'))
 
 load_dotenv()
 

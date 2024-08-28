@@ -41,7 +41,7 @@ class MktOptions(models.TextChoices):
     TURKIYE = 'tr-TR', 'Turquia'
     UNITED_KINGDOM = 'en-GB', 'Reino Unido'
     UNITED_STATES = 'en-US', 'Estados Unidos'
-    UNITED_STATES_SPANISH = 'es-US', 'Estados Unidos'
+    UNITED_STATES_SPANISH = 'es-US', 'Estados Unidos Espanhol'
 
 
 class FreshnessOptions(models.TextChoices):
