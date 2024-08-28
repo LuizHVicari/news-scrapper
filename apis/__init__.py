@@ -1,0 +1,1 @@
+from .bing_search_api import get_news_from_query

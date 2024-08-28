@@ -1,0 +1,77 @@
+services:
+  web:
+    build: .
+    command: gunicorn news_scrapper.wsgi:application --bind 0.0.0.0:8000
+    expose:
+      - 8000
+    env_file:
+      - ./.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+      - media_volume:/home/app/web/mediafiles
+  db:
+    image: postgres:15
+    volumes: 
+    - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 20s
+      retries: 5
+  nginx:
+    build: ./nginx
+    ports:
+      - 1337:80
+    depends_on:
+      - web
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+      - media_volume:/home/app/web/mediafiles
+  redis:
+    restart: unless-stopped
+    image: redis:7.4.0-alpine
+    expose:
+      - 6379
+    volumes:
+      - cache:/data
+    command: redis-server --save 20 1 --loglevel warning
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 30s
+      retries: 30
+  celery:
+    build: .
+    command: celery -A news_scrapper worker -l info
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+  celery-beat:
+    build: .
+    command: celery -A news_scrapper beat -l info
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+  telegram-bot:
+    build: .
+    command: python telegram_bot.py
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+  cache:
+    driver: local
